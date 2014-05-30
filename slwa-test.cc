@@ -1,6 +1,8 @@
 //
-// g++ slwa-test.cc -o slwa-test -mwindows -lgdiplus
+// g++ slwa-test.cc -o slwa-test -mwindows -lgdiplus -ldwmapi
 //
+
+#define  _WIN32_WINNT 0x0600
 
 #include <assert.h>
 #include <stdio.h>
@@ -10,10 +12,8 @@
 
 int width = 360;
 int height = 360;
-
 HBITMAP hBitmap;
 
-// Window message handler
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   switch (message)
@@ -22,24 +22,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       {
         static unsigned char i = 0;
         i++;
-        SetLayeredWindowAttributes(hWnd, RGB(0,0,0), 128 + (i % 128), LWA_ALPHA);
+        SetLayeredWindowAttributes(hWnd, RGB(0,0,0), 255 - (i % 4), LWA_ALPHA);
 
-        HDC hdcUpdate;
         PAINTSTRUCT ps;
-        hdcUpdate = BeginPaint(hWnd, &ps);
+        HDC hdcUpdate = BeginPaint(hWnd, &ps);
 
         HDC hdcMem = CreateCompatibleDC(hdcUpdate);
         HBITMAP hbmpold = (HBITMAP)SelectObject(hdcMem, hBitmap);
 
 #if 0
-        static unsigned char i = 0;
-        i++;          
-        printf("%d\n", i);
-        HBRUSH BackgroundBrush = CreateSolidBrush(RGB(i, i, i));
-        RECT rect = { 0, 0, ps.rcPaint.right, ps.rcPaint.bottom };
-        FillRect(hdcMem, &rect, BackgroundBrush);
-        DeleteObject(BackgroundBrush);
-
         if (!BitBlt(hdcUpdate, 0, 0, ps.rcPaint.right, ps.rcPaint.bottom, hdcMem, 0, 0, SRCCOPY))
           {
             printf("BitBlt failed: 0x%08x\n", (int)GetLastError());
@@ -58,14 +49,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
         SelectObject(hdcMem, hbmpold);
         DeleteDC(hdcMem);
-        ReleaseDC(hWnd,hdcUpdate);
 
         EndPaint(hWnd, &ps);
       }
       return 0;
+
     case WM_DESTROY:
       PostQuitMessage(0);
       return 0;
+
     default:
       return DefWindowProc(hWnd, message, wParam, lParam);
     }
@@ -81,7 +73,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 
   // Register class
   WNDCLASSEX wcex = {0};
-
   wcex.cbSize = sizeof(WNDCLASSEX);
   wcex.style          = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
   wcex.lpfnWndProc    = WndProc;
@@ -95,6 +86,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
   wcex.hbrBackground  = (HBRUSH)GetStockObject(BLACK_BRUSH);
   RegisterClassEx(&wcex);
 
+  // Create window
   HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_OVERLAPPEDWINDOW | WS_EX_APPWINDOW,
                              szWindowClass,
                              "Transparent Window",
@@ -107,10 +99,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
   m_pImage->GetHBITMAP(bg, &hBitmap);
   assert(hBitmap);
 
-  SetLayeredWindowAttributes(hWnd, RGB(0,0,0), 255, LWA_ALPHA);
+  SetLayeredWindowAttributes(hWnd, RGB(0,0,0), 0, LWA_ALPHA);
 
   DWM_BLURBEHIND blurBehind = { 0 };
-  blurBehind.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION; // | DWM_BB_TRANSITIONONMAXIMIZED;
+  blurBehind.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
   blurBehind.hRgnBlur = CreateRectRgn(-1, -1, 0, 0);
   blurBehind.fEnable = TRUE;
   blurBehind.fTransitionOnMaximized = FALSE;
