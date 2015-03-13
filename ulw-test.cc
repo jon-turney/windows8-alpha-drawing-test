@@ -13,10 +13,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   switch (message)
     {
-    case WM_NCCALCSIZE:
-      if (wParam)
-        return 0;
-      break;
     case WM_DESTROY:
       PostQuitMessage(0);
       return 0;
@@ -55,22 +51,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
   HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_OVERLAPPEDWINDOW | WS_EX_APPWINDOW,
                              szWindowClass,
                              "Transparent Window",
-                             WS_OVERLAPPEDWINDOW | WS_SIZEBOX,
+                             WS_OVERLAPPED | WS_SYSMENU,
                              CW_USEDEFAULT, CW_USEDEFAULT, width, height,
                              NULL, NULL, hInstance, NULL);
 
-  MARGINS margins = { -1, -1, -1, -1 };
-  HRESULT result = DwmExtendFrameIntoClientArea(hWnd, &margins);
-  // DWM_BLURBEHIND blurBehind = { 0 };
-  // blurBehind.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION | DWM_BB_TRANSITIONONMAXIMIZED;
-  // blurBehind.hRgnBlur = CreateRectRgn(-1, -1, 0, 0);
-  // blurBehind.fEnable = TRUE;
-  // blurBehind.fTransitionOnMaximized = FALSE;
-  // DwmEnableBlurBehindWindow(hWnd, &blurBehind);
-  // DeleteObject(blurBehind.hRgnBlur);
-  // DWMNCRENDERINGPOLICY policy = DWMNCRP_DISABLED;
-  // HRESULT r = DwmSetWindowAttribute(hWnd, DWMWA_NCRENDERING_POLICY, &policy, sizeof(policy));
-  // printf("%x\n", r);
 
   HBITMAP hBitmap;
   Gdiplus::Bitmap *m_pImage = Gdiplus::Bitmap::FromFile(L"sample.png", FALSE);
