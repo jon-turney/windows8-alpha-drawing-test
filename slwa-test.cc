@@ -20,31 +20,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_PAINT:
       {
-        static unsigned char i = 0;
-        i++;
-        SetLayeredWindowAttributes(hWnd, RGB(0,0,0), 255 - (i % 4), LWA_ALPHA);
-
         PAINTSTRUCT ps;
         HDC hdcUpdate = BeginPaint(hWnd, &ps);
 
         HDC hdcMem = CreateCompatibleDC(hdcUpdate);
         HBITMAP hbmpold = (HBITMAP)SelectObject(hdcMem, hBitmap);
 
-#if 0
         if (!BitBlt(hdcUpdate, 0, 0, ps.rcPaint.right, ps.rcPaint.bottom, hdcMem, 0, 0, SRCCOPY))
           {
             printf("BitBlt failed: 0x%08x\n", (int)GetLastError());
-          }
-#endif
-
-        BLENDFUNCTION bf;
-        bf.BlendOp = AC_SRC_OVER;
-        bf.BlendFlags = 0;
-        bf.SourceConstantAlpha = 255;
-        bf.AlphaFormat = AC_SRC_ALPHA;
-        if (!GdiAlphaBlend(hdcUpdate, 0, 0, ps.rcPaint.right, ps.rcPaint.bottom, hdcMem, 0, 0, width, height, bf))
-          {
-            printf("AlphaBlend failed: 0x%08x\n", (int)GetLastError());
           }
 
         SelectObject(hdcMem, hbmpold);
@@ -90,7 +74,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
   HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_OVERLAPPEDWINDOW | WS_EX_APPWINDOW,
                              szWindowClass,
                              "Transparent Window",
-                             WS_OVERLAPPEDWINDOW | WS_SIZEBOX,
+                             WS_OVERLAPPED | WS_SYSMENU,
                              CW_USEDEFAULT, CW_USEDEFAULT, width, height,
                              NULL, NULL, hInstance, NULL);
 
@@ -99,7 +83,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
   m_pImage->GetHBITMAP(bg, &hBitmap);
   assert(hBitmap);
 
-  SetLayeredWindowAttributes(hWnd, RGB(0,0,0), 0, LWA_ALPHA);
+  SetLayeredWindowAttributes(hWnd, RGB(0,0,0), 255, LWA_ALPHA);
 
   DWM_BLURBEHIND blurBehind = { 0 };
   blurBehind.dwFlags = DWM_BB_ENABLE | DWM_BB_BLURREGION;
